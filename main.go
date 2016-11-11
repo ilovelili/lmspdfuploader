@@ -9,6 +9,8 @@ import (
 	"io/ioutil"
 	"sync"
 
+	"time"
+
 	"golang.org/x/net/context"
 	"golang.org/x/oauth2/google"
 	storage "google.golang.org/api/storage/v1"
@@ -22,7 +24,7 @@ const (
 var (
 	projectID  = flag.String("project", "artificial-intelligence-ade", "define project")
 	bucketName = flag.String("bucket", "lms_archieve", "define bucket")
-	localDir   = flag.String("localdirectory", "c:\\Apache24\\htdocs\\lms\\public\\pdf", "local directory")
+	localDir   = flag.String("localdir", "c:\\Apache24\\htdocs\\lms\\public\\pdf\\", "local directory")
 )
 
 func main() {
@@ -68,21 +70,26 @@ func main() {
 
 	var wg sync.WaitGroup
 	wg.Add(len(files))
-
-	fmt.Printf("%d files to move", len(files))
+	// one month ago
+	timeThreshold := time.Now().AddDate(0, 0, -1)
 
 	for _, file := range files {
-		// go routine to move
-		go func(file string) {
-			defer wg.Done()
-			if !storageservice.Move(service, file) {
-				fmt.Println("Move failed!")
-			} else {
-				fmt.Printf("%q Moved to storage", file)
-			}
-		}(file.Name())
+		// shrink the files older than one month
+		if file.ModTime().Before(timeThreshold) {
+			// go routine to move
+			go func(file string) {
+				fmt.Printf("file move: %s\n", file)
+				defer wg.Done()
+
+				if !storageservice.Move(service, file) {
+					fmt.Println("Move failed!")
+				} else {
+					fmt.Printf("%q Moved to storage", file)
+				}
+			}(file.Name())
+		}
 	}
 
-	wg.Wait();
-	fmt.Println("done");
+	wg.Wait()
+	fmt.Println("done")
 }
