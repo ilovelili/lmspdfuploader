@@ -87,6 +87,8 @@ func main() {
 					fmt.Printf("%q Moved to storage", file)
 				}
 			}(file.Name())
+		} else {
+			wg.Done()
 		}
 	}
 
