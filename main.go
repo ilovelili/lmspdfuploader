@@ -42,6 +42,7 @@ func main() {
 	// Authentication is provided by the gcloud tool when running locally, and
 	// by the associated service account when running on Compute Engine.
 	client, err := google.DefaultClient(context.Background(), scope)
+
 	if err != nil {
 		log.Fatalf("Unable to get default client: %v", err)
 	}
@@ -63,15 +64,23 @@ func main() {
 	storageservice.SetCurrentStorageAccessor(accessor)
 
 	// read the pdfs in pdf directory
-	files, err := ioutil.ReadDir(*localDir)
+	allfiles, err := ioutil.ReadDir(*localDir)
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	// take top 100 since
+	// https://github.com/golang/go/issues/16582
+	maxcount := len(allfiles)
+	if maxcount > 100 {
+		maxcount = 100
+	}
+	files := allfiles[:maxcount]
+
 	var wg sync.WaitGroup
 	wg.Add(len(files))
 	// one month ago
-	timeThreshold := time.Now().AddDate(0, 0, -1)
+	timeThreshold := time.Now().AddDate(0, -1, 0)
 
 	for _, file := range files {
 		// shrink the files older than one month

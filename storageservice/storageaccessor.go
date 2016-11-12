@@ -60,10 +60,10 @@ func (accessor *StorageAccessor) Move(service *storage.Service, shortfilename st
 		// great, unlink the localfile
 		os.Remove(longfilename)
 		return true
+	} else {
+		fatalf("Objects.Insert failed: %v", err)
+		return false
 	}
-
-	fatalf("Objects.Insert failed: %v", err)
-	return false
 }
 
 // Copy copy localfile to storage
